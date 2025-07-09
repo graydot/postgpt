@@ -1,5 +1,12 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 import torch
+"""
+Base Prompts:
+Write a blog post (approx. 1000 words) that explains what large language models (LLMs) are and why they matter. Target a curious tech-savvy reader.
+
+Write a 1000-word blog post introducing large language models (LLMs). Make it sound professional but beginner-friendly. Include 2–3 examples of what LLMs can do.
+
+"""
 
 models = [
     "distilgpt2", #0
@@ -31,11 +38,12 @@ def main():
         print("Tokenizing input...")
         inputs = tokenizer(user_input, return_tensors="pt").to(device)
         print("Generating response...")
+        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         with torch.no_grad():
             outputs = model.generate(
                 **inputs, 
-                max_new_tokens=100, 
-                num_return_sequences=3,
+                max_new_tokens=5000, 
+                num_return_sequences=1,
                 do_sample=True,
                 temperature=0.7,
                 top_p=0.9,
@@ -43,14 +51,8 @@ def main():
                 repetition_penalty=1.2,
                 pad_token_id=tokenizer.eos_token_id,
                 eos_token_id=tokenizer.eos_token_id,
+                streamer=streamer,
             )
-            print("Decoding responses...")
-            for i, output in enumerate(outputs):
-                response = tokenizer.decode(output, skip_special_tokens=True)
-                print("\n" + "="*50)
-                print(f"Response {i+1}:")
-                print(response)
-                print("="*50 + "\n")
 
 if __name__ == "__main__":
     main()
